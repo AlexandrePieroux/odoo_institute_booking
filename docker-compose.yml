@@ -1,0 +1,43 @@
+services:
+  web:
+    image: odoo:18.0
+    container_name: instant-ego.odoo
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./your_project/institute-booking:/mnt/extra-addons/institute-booking
+    environment:
+      - PASSWORD_FILE=/run/secrets/postgresql_password
+    secrets:
+      - postgresql_password
+    networks:
+      - default
+
+  db:
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgresql_password
+      - POSTGRES_USER=odoo
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+    secrets:
+      - postgresql_password
+    networks:
+      - default
+
+networks:
+  default:
+
+volumes:
+  odoo-data:
+  pgdata:
+
+secrets:
+  postgresql_password:
+    file: pg_pass
