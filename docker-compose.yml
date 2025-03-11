@@ -9,7 +9,7 @@ services:
     volumes:
       - odoo-data:/var/lib/odoo
       - ./config:/etc/odoo
-      - ./your_project/institute-booking:/mnt/extra-addons/institute-booking
+      - ./institute_booking:/mnt/extra-addons/institute_booking
     environment:
       - PASSWORD_FILE=/run/secrets/postgresql_password
     secrets:
