@@ -98,6 +98,7 @@ class InstituteBooking(portal.PaymentPortal):
                 'search_count': product_count,
                 'bins': lazy(lambda: TableCompute().process(products, ppg, ppr)),
                 'gap': gap,
+                'category': category,
                 'categories': categs,
                 'keep': keep,
                 'search_categories_ids': search_categories.ids,

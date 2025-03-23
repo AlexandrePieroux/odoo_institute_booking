@@ -47,12 +47,12 @@
                                 <div t-if="category"
                                     class="d-flex align-items-center d-lg-none me-auto">
                                     <t t-if="not category.parent_id" t-set="backUrl"
-                                        t-valuef="/shop" />
+                                        t-valuef="/booking" />
                                     <t t-else="" t-set="backUrl"
-                                        t-value="keep('/shop/category/' + slug(category.parent_id), category=0)" />
+                                        t-value="keep('/booking/category/' + slug(category.parent_id), category=0)" />
 
                                     <a t-attf-class="btn btn-{{navClass}} me-2"
-                                        t-att-href="category.parent_id and keep('/shop/category/' + slug(category.parent_id), category=0) or '/shop'">
+                                        t-att-href="category.parent_id and keep('/booking/category/' + slug(category.parent_id), category=0) or '/booking'">
                                         <i class="fa fa-angle-left" />
                                     </a>
                                     <h4 t-out="category.name" class="mb-0 me-auto" />
