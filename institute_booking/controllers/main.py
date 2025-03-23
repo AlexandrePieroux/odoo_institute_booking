@@ -3,12 +3,17 @@ from werkzeug.exceptions import NotFound
 from odoo.http import request, route
 from odoo.tools import float_round, lazy
 from odoo.addons.payment.controllers import portal
-from odoo.addons.website_sale.contollers.main import TableCompute
+from odoo.addons.website_sale.controllers.main import TableCompute
 from odoo.addons.website.controllers.main import QueryURL
 
 
 class InstituteBooking(portal.PaymentPortal):
-    @route(['/booking'], type='http', auth="public", website=True)
+    @route([
+        '/booking',
+        '/booking/page/<int:page>',
+        '/booking/category/<model("product.public.category"):category>',
+        '/booking/category/<model("product.public.category"):category>/page/<int:page>'
+    ], type='http', auth="public", website=True)
     def booking(self, page=0, ppg=False, search='', category=None, **post):
         if not request.website.has_ecommerce_access():
             return request.redirect('/web/login')
@@ -91,6 +96,7 @@ class InstituteBooking(portal.PaymentPortal):
             "institute_booking.services",
             {
                 'search': fuzzy_search_term or search,
+                'pager': pager,
                 'original_search': fuzzy_search_term and search,
                 'order': post.get('order', ''),
                 'products': products,
@@ -98,12 +104,15 @@ class InstituteBooking(portal.PaymentPortal):
                 'search_count': product_count,
                 'bins': lazy(lambda: TableCompute().process(products, ppg, ppr)),
                 'gap': gap,
+                'ppg': ppg,
+                'ppr': ppr,
+                'selected_attributes_hash': '',
                 'category': category,
                 'categories': categs,
                 'keep': keep,
                 'search_categories_ids': search_categories.ids,
                 'products_prices': products_prices,
                 'get_product_prices': lambda product: lazy(lambda: products_prices[product.id]),
-                'float_round': float_round,
+                'float_round': float_round
             }
         )

@@ -1,5 +1,5 @@
 <odoo>
-    <template id="products" name="Products">
+    <template id="services" name="Institute Booking">
         <t t-call="website.layout">
             <t t-set="additional_title" t-value="category.name" />
             <t t-set="grid_block_name">Grid</t>
@@ -9,20 +9,14 @@
                 Change accordingly to the derired visual result (eg. `primary`, `dark`...)-->
             <t t-set="navClass" t-valuef="light" />
 
-            <!-- Check for active options: the stored value may be used in sub-templates too  -->
-            <t t-set="opt_wsale_categories"
-                t-value="is_view_active('website_sale.products_categories')" />
-            <t t-set="opt_wsale_categories_top"
-                t-value="is_view_active('website_sale.products_categories_top')" />
-
             <div id="wrap" class="js_sale o_wsale_products_page">
                 <div class="oe_structure oe_empty oe_structure_not_nearest"
                     id="oe_structure_website_sale_products_1" />
                 <div class="container oe_website_sale pt-2">
                     <div class="row o_wsale_products_main_row align-items-start flex-nowrap">
                         <div id="products_grid"
-                            t-attf-class="o_wsale_layout_list {{'col-lg-9' if hasLeftColumn else 'col-12'}}">
-                            <t t-call="website_sale.products_breadcrumb">
+                            t-attf-class="o_wsale_layout_list col-lg-9">
+                            <t t-call="institute_booking.products_breadcrumb">
                                 <t t-set="_classes" t-valuef="d-none d-lg-flex w-100 p-0 small" />
                             </t>
 
@@ -39,11 +33,14 @@
                                     t-field="category.website_description" />
                             </t>
 
-                            <t t-if="opt_wsale_categories_top"
-                                t-call="website_sale.filmstrip_categories" />
+                            <t t-call="institute_booking.filmstrip_categories" />
 
                             <div
                                 class="products_header btn-toolbar flex-nowrap align-items-center justify-content-between gap-3 mb-3">
+                                <t t-if="is_view_active('institute_booking.search')" t-call="institute_booking.search">
+                                    <t t-set="search" t-value="original_search or search"/>
+                                    <t t-set="_form_classes" t-valuef="d-lg-inline {{'d-inline' if not category else 'd-none'}}"/>
+                                </t>
                                 <div t-if="category"
                                     class="d-flex align-items-center d-lg-none me-auto">
                                     <t t-if="not category.parent_id" t-set="backUrl"
@@ -98,7 +95,7 @@
                                                 >
                                                     <div
                                                         t-attf-class="o_wsale_product_grid_wrapper position-relative h-100 o_wsale_product_grid_wrapper_#{td_product['x']}_#{td_product['y']}">
-                                                        <t t-call="website_sale.products_item">
+                                                        <t t-call="institute_booking.products_item">
                                                             <t t-set="product"
                                                                 t-value="td_product['product']" />
                                                         </t>
@@ -127,13 +124,198 @@
                                 />
                             </t>
                         </div>
-                    </div>
+                        <aside id="products_grid_before" class="d-none d-lg-block position-sticky col-3 px-3 clearfix">
+                            <div class="o_wsale_products_grid_before_rail vh-100 ms-n2 mt-n2 pt-2 p-lg-2 pb-lg-5 ps-2 overflow-y-scroll">
+                                <t
+                                    t-set="is_sidebar_collapsible"
+                                    t-value="is_view_active('website_sale.products_categories_list_collapsible')"
+                                />
 
-                    <t t-call="website_sale.o_wsale_offcanvas" />
+                                <t t-call="website_sale.cart_lines"/>
+                            </div>
+                        </aside>
+                    </div>
                 </div>
                 <div class="oe_structure oe_empty oe_structure_not_nearest"
                     id="oe_structure_website_sale_products_2" />
             </div>
         </t>
+    </template>
+
+    <template id="search" name="Search Box" active="True">
+        <t t-call="website.website_search_box_input">
+            <t t-set="_form_classes" t-valuef="o_wsale_products_searchbar_form me-auto flex-grow-1 {{_form_classes}}"/>
+            <t t-set="_submit_classes" t-valuef="btn btn-{{navClass}}"/>
+            <t t-set="_input_classes" t-valuef="border-0 text-bg-{{navClass}}"/>
+            <t t-set="search_type" t-valuef="products"/>
+            <t t-set="action" t-value="keep('/booking'+ ('/category/'+slug(category)) if category else None, search=0) or '/shop'"/>
+            <t t-set="display_image" t-valuef="true"/>
+            <t t-set="display_description" t-valuef="true"/>
+            <t t-set="display_extra_link" t-valuef="true"/>
+            <t t-set="display_detail" t-valuef="true"/>
+            <t t-if="attrib_values">
+                <t t-foreach="attrib_values" t-as="a">
+                    <input type="hidden" name="attribute_value" t-att-value="'%s-%s' % (a[0], a[1])" />
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="filmstrip_categories" name="Categories Filmstrip">
+        <t t-if="category.id">
+            <t t-set="entries" t-value="not search and category.child_id or category.child_id.filtered(lambda c: category.id in search_categories_ids)"/>
+
+            <t t-if="not entries">
+                <t t-set="parent" t-value="category.parent_id"/>
+                <t t-set="entries" t-value="not search and parent.child_id or parent.child_id.filtered(lambda c: parent.id in search_categories_ids)"/>
+            </t>
+        </t>
+        <t t-else="">
+            <t t-set="entries" t-value="categories"/>
+        </t>
+
+        <div t-if="entries" class="o_wsale_filmstip_container d-flex align-items-stretch mb-2 overflow-hidden">
+            <div class="o_wsale_filmstip_wrapper pb-1 overflow-auto">
+                <ul class="o_wsale_filmstip d-flex align-items-stretch mb-0 list-unstyled overflow-visible">
+                    <t t-if="category.parent_id" t-set="backUrl" t-value="keep('/booking/category/' + slug(category.parent_id), category=0)"/>
+                    <t t-else="" t-set="backUrl" t-value="'/booking'"/>
+
+                    <li
+                        t-foreach="entries"
+                        t-as="c"
+                        t-attf-class="d-flex {{'pe-3' if not c_last else ''}}"
+                    >
+                        <a
+                            t-att-href="keep('/booking/category/' + slug(c), category=0)"
+                            class="text-decoration-none"
+                            draggable="false"
+                        >
+                            <input
+                                type="radio"
+                                t-attf-name="wsale_categories_top_radios_{{parentCategoryId}}"
+                                class="btn-check pe-none"
+                                t-att-id="c.id"
+                                t-att-value="c.id"
+                                t-att-checked="'true' if c.id == category.id else None"/>
+                            <div
+                                t-att-class="'d-flex align-items-center h-100 btn btn-'
+                                    + navClass
+                                    + (c.image_128 and ' ps-2 pe-3' or ' px-4')
+                                    + (c.id == category.id and ' border-primary' or '')"
+                            >
+                                <div
+                                    t-if="c.image_128"
+                                    t-attf-style="background-image:url('data:image/png;base64,
+                                        #{c.image_128}')"
+                                    class="o_image_40_cover oe_img_bg o_bg_img_center
+                                        flex-shrink-0 rounded-3 me-3"
+                                    t-att-alt="c.name "/>
+                                <span class="text-nowrap" t-field="c.name"/>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </template>
+
+    <template id="products_item" name="Products item">
+        <form action="/booking/cart/update" 
+            method="post" 
+            class="oe_product_cart h-100 d-flex oe_product_cart_has_description"
+            t-att-data-publish="product.website_published and 'on' or 'off'"
+            itemscope="itemscope" 
+            itemtype="http://schema.org/Product">
+            <t t-set="product_href" t-value="keep(product.website_url, page=(pager['page']['num'] if pager['page']['num']&gt;1 else None)) + selected_attributes_hash" />
+            <t t-set="image_type" t-value="product._get_suitable_image_size(ppr, td_product['x'], td_product['y'])"/>
+
+            <div class="oe_product_image position-relative flex-grow-0 overflow-hidden">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()" t-nocache="The csrf token must always be up to date."/>
+                <a
+                    t-att-href="product_href"
+                    class="oe_product_image_link d-block position-relative"
+                    itemprop="url"
+                    contenteditable="false"
+                >
+                    <t t-set="image_holder" t-value="product._get_image_holder()"/>
+                    <span t-field="image_holder.image_1920"
+                        t-options="{'widget': 'image', 'preview_image': image_type, 'itemprop': 'image', 'class': 'h-100 w-100 position-absolute'}"
+                        class="oe_product_image_img_wrapper d-flex h-100 justify-content-center align-items-center position-absolute"/>
+
+                    <t t-set="bg_color" t-value="td_product['ribbon'].bg_color"/>
+                    <t t-set="text_color" t-value="td_product['ribbon'].text_color"/>
+                    <t t-set="bg_class" t-value="td_product['ribbon']._get_position_class()"/>
+                    <span
+                        t-attf-class="o_ribbon o_not_editable #{bg_class}"
+                        t-attf-style="#{text_color and ('color: %s;' % text_color)} #{bg_color and 'background-color:' + bg_color}"
+                        t-out="td_product['ribbon'].name or ''"
+                    />
+                </a>
+            </div>
+            <div class="o_wsale_product_information position-relative d-flex flex-column flex-grow-1 flex-shrink-1">
+                <div class="o_wsale_product_information_text">
+                    <h6 class="o_wsale_products_item_title mb-2 text-break">
+                        <span class="text-primary text-decoration-none text-primary-emphasis" itemprop="name" t-att-content="product.name" t-field="product.name" />
+                        <a t-if="not product.website_published" role="button" t-att-href="product_href" class="btn btn-sm btn-danger" title="This product is unpublished.">
+                            Unpublished
+                        </a>
+                    </h6>
+                    <div class="oe_subdescription mb-2 text-muted small" contenteditable="false">
+                        <div itemprop="description" t-field="product.description_sale"/>
+                    </div>
+                </div>
+                <div class="o_wsale_product_sub d-flex justify-content-between align-items-end gap-2 flex-wrap">
+                    <t t-set="template_price_vals" t-value="get_product_prices(product)"/>
+                    <div class="o_wsale_product_btn d-flex gap-2">
+                        <t t-set="product_variant_id" t-value="product._get_first_possible_variant_id()"/>
+                        <input name="product_id" t-att-value="product_variant_id" type="hidden"/>
+                        <input name="product_template_id" t-att-value="product.id" type="hidden"/>
+                        <t t-if="product_variant_id and template_price_vals['price_reduce'] or not website.prevent_zero_price_sale">
+                            <a
+                                t-if="product._website_show_quick_add()"
+                                href="#"
+                                role="button"
+                                class="btn btn-light a-submit"
+                                aria-label="Shopping cart"
+                                title="Shopping cart"
+                            >
+                                <span class="fa fa-shopping-cart"/>
+                            </a>
+                        </t>
+                    </div>
+                    <div class="product_price" itemprop="offers" itemscope="itemscope" itemtype="http://schema.org/Offer">
+                        <span class="h6 mb-0"
+                              t-if="template_price_vals['price_reduce'] or not website.prevent_zero_price_sale"
+                              t-out="template_price_vals['price_reduce']"
+                              t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
+                        <span class="h6 mb-0" t-elif="any(ptav.price_extra for ptav in product.attribute_line_ids.product_template_value_ids)">&amp;nbsp;</span>
+                        <span class="h6 mb-0" t-else="" t-field="website.prevent_zero_price_sale_text"/>
+                        <t t-if="'base_price' in template_price_vals and (template_price_vals['base_price'] &gt; template_price_vals['price_reduce']) and (template_price_vals['price_reduce'] or not website.prevent_zero_price_sale)">
+                            <del t-attf-class="text-muted me-1 h6 mb-0" style="white-space: nowrap;">
+                                <em class="small" t-esc="template_price_vals['base_price']" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}" />
+                            </del>
+                        </t>
+                        <span itemprop="price" style="display:none;" t-esc="template_price_vals['price_reduce']" />
+                        <span itemprop="priceCurrency" style="display:none;" t-esc="website.currency_id.name" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </template>
+
+    <template id="products_breadcrumb" name="Products Breadcrumb">
+        <ol t-if="category" t-attf-class="breadcrumb #{_classes}">
+            <li class="breadcrumb-item">
+                <a href="/booking">Products</a>
+            </li>
+            <t t-foreach="category.parents_and_self" t-as="cat">
+                <li t-if="cat == category" class="breadcrumb-item">
+                    <span class="d-inline-block" t-field="cat.name"/>
+                </li>
+                <li t-else="" class="breadcrumb-item">
+                    <a t-att-href="keep('/booking/category/%s' % slug(cat), category=0)" t-field="cat.name"/>
+                </li>
+            </t>
+        </ol>
     </template>
 </odoo>
