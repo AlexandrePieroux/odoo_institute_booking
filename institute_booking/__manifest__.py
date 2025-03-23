@@ -5,9 +5,14 @@
     'summary': 'Allow clients to book for services appointment',
     'version': '1.0',
     'depends': [
-        'website', 
-        'sale', 
-        'website_payment'
+        'website_sale'
+    ],
+    'data': [
+        'data/data.xml',
+
+        'views/templates.xml',
+
+        'views/templates.xml',
     ],
     'installable': True,
     'application': True,
